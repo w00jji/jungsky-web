@@ -1,0 +1,12 @@
+/* ══════════ 푸터 (라이브 PC: 흰 배경, 붓글씨 로고 + 원형 SNS 아이콘) ══════════ */
+footer{background:#fff;padding:44px 0 52px;font-size:13.5px;color:#333}
+.foot-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.foot-logo img{height:52px;width:auto}
+.foot-sns{display:flex;gap:14px}
+.foot-sns img{width:44px;height:44px;border-radius:50%}
+footer .info{margin-top:18px;line-height:2}
+@media (max-width:768px){
+  .foot-logo img{height:42px}
+  .foot-sns img{width:38px;height:38px}
+  footer .info{font-size:12px}
+}

@@ -1,0 +1,36 @@
+/* ══════════ S4 작업 분야 (라이브: 사진 배경 + 0.75 오버레이 + 주황 타이틀) ══════════ */
+/* 시안 jungsky-site/index.html .fields 블록 원치수 그대로 이식 */
+
+/* IMAGE-SLOT: /images/fields/bg.jpg | 가로 1920px↑ 권장(가로형 배경) | 핫링크 */
+/* 발주자 이미지 삽입 위치: frontend/public/images/fields/bg.jpg
+   삽입 후 아래 background url() 을 url('/images/fields/bg.jpg') 로 교체(QA 확인 후). */
+.fields{
+  position:relative;padding:88px 0;
+  background:url('/images/fields/bg.jpg') center/cover no-repeat;
+}
+.fields::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.75)}
+.fields .wrap{position:relative;z-index:2;text-align:center}
+.fields h2{font-size:clamp(20px,2.6vw,26px);font-weight:800;color:#FF7A2E}
+.fields .sub{margin-top:12px;font-size:clamp(14px,2vw,17px);color:#fff}
+.service-list{max-width:960px;margin:34px auto 0;display:flex;flex-direction:column;gap:16px}
+.service-row{
+  font-size:17px;font-weight:600;padding:14px 0;
+  background:#fff;border:2px solid #060943;color:#060943;border-radius:10px;
+  box-shadow:0 3px 10px rgba(0,0,0,.1);
+  transition:transform .3s ease,background .3s ease;
+}
+.service-row:hover{transform:translateY(-3px);background:#1E2A78;color:#fff}
+
+/* ── 스크롤 등장 애니메이션 (2026-07-27 발주자 요청): 섹션이 화면에 15% 들어오면
+   useReveal 훅이 .revealed를 붙이고, 각 요소가 아래(40px)에서 떠오르며 페이드인.
+   제목 → 설명(0.1s) → 카드 4줄(0.2s부터 0.12s 간격, 인라인 animationDelay) 순차.
+   transition이 아닌 일회성 animation(backwards)이라 끝난 뒤 hover 반전(.3s transition)과 충돌 없음. */
+.fields .reveal{opacity:0;transform:translateY(40px)}
+.fields.revealed .reveal{opacity:1;transform:none;animation:fieldsRise .7s ease backwards}
+.fields.revealed .sub.reveal{animation-delay:.1s}
+.fields.revealed .service-row:hover{transform:translateY(-3px)} /* revealed 규칙이 hover를 덮지 않게 재선언 */
+@keyframes fieldsRise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+@media (max-width:768px){
+  .fields{padding:56px 0}
+  .service-row{font-size:14px;padding:11px 8px}
+}

@@ -1,0 +1,15 @@
+/* ══════════ 하단 알약형 24시 문의전화 콜바 (시안 원본 그대로) ══════════ */
+.callbar{
+  position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);z-index:1000;
+  display:inline-flex;align-items:center;gap:11px;
+  background:#FF7A1A;color:#fff;
+  font-weight:800;font-size:17px;letter-spacing:-.01em;
+  padding:13px 26px;border-radius:99px;white-space:nowrap;
+  box-shadow:0 10px 26px rgba(22,38,76,.22);
+  transition:transform .15s,background .2s;
+}
+.callbar:active{background:#E96A0C;transform:translateX(-50%) scale(.97)}
+.callbar svg{flex:none}
+.callbar-txt{display:inline-flex;align-items:baseline;gap:8px}
+.callbar small{font-weight:600;font-size:12px;opacity:.92}

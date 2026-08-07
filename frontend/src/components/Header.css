@@ -1,0 +1,18 @@
+/* ══════════ 헤더 (라이브: 흰 배경, 붓글씨 로고 + 메뉴 나란히)
+   원본은 scrollToFixed로 스크롤 시 헤더가 상단 고정 — sticky로 동일 재현.
+   전화 배너(fixed, z-index 9999)가 헤더 위에 얹혀 둘이 한 몸처럼 따라다님
+   ── #choose,#cases 의 scroll-margin-top 앵커 가드는 global.css 로 이관 ══════════ */
+header{position:sticky;top:0;z-index:9998;background:#fff}
+.header-in{display:flex;align-items:center;gap:36px;height:112px}
+.logo img{height:56px;width:auto}
+nav{display:flex;gap:28px}
+nav a{font-size:16px;font-weight:500;color:#222}
+nav a:hover{color:#002366}
+@media (max-width:768px){
+  .header-in{height:88px;gap:20px}
+  .logo img{height:44px}
+  nav a{font-size:14px}
+  /* 모바일: 헤더 메뉴 숨김 — 전화 배너(fixed)가 좁은 화면에서 '작업사례'를 덮는 문제 해결.
+     원본 사이트도 모바일에서 PC 메뉴를 숨김(2026-07-31 실측 확인). 로고+전화 배너만 남김. */
+  nav{display:none}
+}

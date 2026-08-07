@@ -1,0 +1,27 @@
+/* ══════════ 기본 (시안 jungsky-site/index.html의 "기본" 블록 원치수 이식) ══════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{overflow-x:clip} /* 가로 스크롤 발생 금지 가드 (요구사항 NFR-04) */
+body{
+  font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;
+  color:#1B2430;background:#fff;line-height:1.6;
+  padding-bottom:calc(80px + env(safe-area-inset-bottom)); /* 하단 알약 콜바 여유 */
+  word-break:keep-all; /* 한글은 단어(어절) 단위로만 줄바꿈 — '이유'가 '이/유'로 갈리는 것 방지(2026-07-31 발주자 지적) */
+}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+
+/* 섹션 사이 흰 여백 — 실사이트의 빈 스페이서 섹션 재현 (PC 232px / 모바일 99px, 2026-07-27 실측) */
+.section-gap{height:232px;background:#fff}
+@media (max-width:768px){.section-gap{height:99px}}
+
+/* 고정 헤더에 앵커 섹션이 가려지지 않게 착지 지점을 헤더 높이만큼 내림 (시안 앵커 가드) */
+#choose,#cases{scroll-margin-top:112px}
+@media (max-width:768px){#choose,#cases{scroll-margin-top:88px}}
+
+/* 모션 최소화 설정 존중 (접근성) — 시안 최하단 전역 가드 블록 이식 (S0a QA 잔여 작업) */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important;animation:none!important}
+}

@@ -1,0 +1,27 @@
+/* ══════════ 견적 상담 CTA (라이브: #05062d, 좌 텍스트+주황 버튼 / 우 헤드셋 GIF) ══════════ */
+/* 시안 index.html .final 블록 원치수 이식 (라인 304~322) */
+.final{background:#05062d;padding:84px 0}
+.final .inner{
+  display:flex;align-items:center;justify-content:space-between;gap:36px;
+}
+.final h1{font-size:clamp(26px,4vw,44px);font-weight:800;color:#fff;line-height:1.4}
+.final .cta-phone{
+  margin-top:34px;font-size:clamp(20px,2.4vw,26px);font-weight:bold;
+  display:inline-flex;align-items:center;gap:12px;
+  padding:14px 30px;background:#FF6600;color:#fff;border-radius:6px;
+  animation:phoneBlink 1.5s infinite;
+  box-shadow:0 4px 8px rgba(0,0,0,.2);transition:all .3s ease;
+}
+.final .cta-phone:hover{background:#FF8833;transform:scale(1.05);box-shadow:0 6px 12px rgba(0,0,0,.3)}
+@keyframes phoneBlink{0%{opacity:1}50%{opacity:.8}100%{opacity:1}}
+.final .gif img{width:min(300px,32vw);height:auto}
+/* 텍스트↔헤드셋 간격 축소(2026-07-30 발주자 요청): 원본 gap 396px → 246px(약 −38%).
+   space-between에서 GIF에 margin-right를 줘 GIF만 좌측으로 당김(텍스트는 페이지 좌측 정렬 유지). 데스크톱 전용.
+   더 줄이려면 margin-right 값을 키우면 됨(gap = 396 − 이 값). */
+@media (min-width:769px){.final .gif{margin-right:100px}}
+@media (max-width:768px){
+  .final{padding:56px 0}
+  /* 앱(모바일): 좌측 붙음 → 중앙 정렬(2026-07-30 발주자 요청). align-items+text-align로 제목·버튼·GIF 모두 가운데 */
+  .final .inner{flex-direction:column;align-items:center;text-align:center}
+  .final .gif img{width:200px;margin:0 auto}
+}

@@ -1,0 +1,53 @@
+/* ══════════ S5 기종별 작업 사례 (라이브: 사진 배경 + 0.65 오버레이 + 흰 카드) ══════════ */
+/* 시안 jungsky-site/index.html .trucks 블록 원치수 그대로 이식 */
+
+/* IMAGE-SLOT: /images/fleet/bg02.jpg | 1500×2000 (웹용 축소·EXIF 제거) | 완료(2026-07-30 발주자 삽입)
+   ⚠️ url()은 반드시 앞 슬래시로 시작(사이트 루트 기준). 상대경로면 배포 시 /assets/ 기준이라 404. */
+.trucks{
+  position:relative;padding:80px 0 88px;
+  background:#0b0d2f url('/images/fleet/bg02.jpg') center/cover no-repeat;
+}
+.trucks::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.65)}
+/* 배경 고정 패럴랙스 — 실사이트 실측(2026-07-27): PC는 fixed_bg_wrap = background-attachment:fixed
+   (스크롤 시 배경은 제자리, 콘텐츠만 흘러감). 모바일은 실사이트도 일반 배경(iOS 미지원 이슈) → 데스크톱만 적용 */
+@media (min-width:769px){.trucks{background-attachment:fixed}}
+.trucks .wrap{position:relative;z-index:2;text-align:center}
+.trucks h2{font-size:clamp(22px,3vw,30px);font-weight:800;color:#FF7A2E}
+.trucks .sub{margin-top:12px;font-size:clamp(14px,2vw,17px);color:#fff}
+.truck-gallery{
+  position:relative;z-index:2;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:40px;
+  max-width:1000px;margin:44px auto 0;padding:0 20px;justify-items:center;
+}
+.truck-card{
+  width:100%;max-width:420px;background:#fff;border-radius:12px;
+  text-align:center;padding:24px;
+  box-shadow:0 6px 16px rgba(0,0,0,.15);
+  transition:transform .3s ease,box-shadow .3s ease;color:#000;
+}
+.truck-card:hover{transform:translateY(-6px);box-shadow:0 10px 24px rgba(0,0,0,.2)}
+.truck-card img{width:100%;height:auto;border-radius:6px}
+.truck-card h3{font-size:22px;margin:20px 0 15px;font-weight:bold}
+.detail-btn{
+  display:block;background:#002366;color:#fff!important;border:none;
+  padding:14px 20px;border-radius:6px;font-size:15px;font-weight:bold;cursor:pointer;
+  transition:background .3s,transform .2s;text-align:center;margin-top:10px;
+}
+.detail-btn:hover{background:#0056b3;transform:scale(1.05)}
+
+/* ── 등장 애니메이션 (발주자 요청 2026-07-27, 실사이트 https://정스카이.com 실측 스펙):
+   제목(h2)+부제(.sub) 텍스트 블록만 아임웹 fadeInUp 1회 재현.
+   from{opacity:0;translateY(100%)}(자기 높이만큼 아래) → to{opacity:1;none}, 0.7s ease, delay 0.
+   섹션이 화면에 15% 들어오면 useReveal 훅이 .revealed를 붙여 발동.
+   카드(truck-gallery)는 애니메이션 없음 — 실사이트가 명시적으로 anim="none".
+   .revealed 규칙에 opacity:1/transform:none 기본값을 함께 둬, animation 종료 후 및
+   prefers-reduced-motion(global.css의 animation:none!important) 시에도 정상 표시된다. */
+.trucks .reveal{opacity:0}
+.trucks.revealed .reveal{opacity:1;transform:none;animation:trucksFadeInUp .7s ease backwards}
+@keyframes trucksFadeInUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:none}}
+
+@media (max-width:768px){
+  .trucks{padding:56px 0 60px}
+  .truck-gallery{grid-template-columns:1fr;gap:28px}
+  .truck-card{max-width:92%}
+}

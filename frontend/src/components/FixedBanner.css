@@ -1,0 +1,28 @@
+/* ══════════ 상단 고정 전화 배너 (시안 index.html 원본 CSS 그대로) ══════════ */
+.fixed-banner{
+  position:fixed;top:10px;right:20px;
+  max-width:calc(100vw - 32px); /* 어떤 창 폭에서도 화면 밖으로 나가지 않게 가드 */
+  background:#002366;color:#fff;
+  font-size:16px;font-weight:500;text-align:center;
+  padding:3px 3px;border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,.2);
+  z-index:9999;display:inline-block;transition:background .3s;
+}
+.fixed-banner:hover{background:#001a4d}
+.banner-text{color:#fff!important;padding:4px 12px;white-space:nowrap}
+.phone-number{
+  font-size:35px;font-weight:700;color:#FF7F00;
+  animation:blink-number 1.5s infinite alternate;
+}
+@keyframes blink-number{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
+/* 창을 줄이면 배너도 단계적으로 축소 — 900px 이하: 헤더(112px) 안에 들어가는 중간 크기 */
+@media (max-width:900px){
+  .fixed-banner{top:8px;right:12px}
+  .banner-text{font-size:13px;padding:3px 10px}
+  .phone-number{font-size:24px}
+}
+/* 768px 이하: 원본 아임웹 모바일 값 (font 14px → 여기선 헤더 88px에 맞춰 미세 조정) */
+@media (max-width:768px){
+  .banner-text{font-size:12px;padding:3px 8px}
+  .phone-number{font-size:18px}
+}
