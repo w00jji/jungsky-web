@@ -7,13 +7,20 @@
  *
  * 파일명 앞 언더스코어(_blog.ts) = Pages가 라우트로 노출하지 않는 비라우트 모듈.
  *
- * 소스(2026-07-31 라이브 실측):
- * - URL:  https://m.blog.naver.com/api/blogs/jungs5377/post-list?categoryNo=0&itemCount=24&page=1
+ * 소스(2026-07-31 라이브 실측, blogId만 바꿔 4개 블로그 동일 스펙 확인):
+ * - URL:  https://m.blog.naver.com/api/blogs/{blogId}/post-list?categoryNo=0&itemCount=24&page=1
  * - 헤더: Referer / User-Agent 필수(없으면 차단될 수 있음).
  * - 응답: { isSuccess, result: { items: [...] } }
  *
  * TODO: 비공식 API, 스펙 변경 시 fetchPostList만 교체.
  */
+
+/**
+ * 통합 수집 대상 네이버 블로그 목록.
+ * 👉 블로그 추가/삭제 시 여기에 blogId만 넣으면 됨(fetch·병합·정렬은 자동).
+ * ⚠️ 'jungsky_'는 끝에 언더스코어 포함 — URL/Referer에 그대로 사용해야 함.
+ */
+export const BLOG_IDS = ["jungs5377", "jung98504", "jungsky_", "kim98405"] as const;
 
 /** 차종 분류 — frontend/src/api/cases.ts 의 TruckType과 반드시 동일한 문자열 */
 export type TruckType = "1t" | "2.5t" | "3.5t" | "5t";
@@ -28,7 +35,10 @@ export interface Case {
   date: string;
 }
 
-const BLOG_ID = "jungs5377";
+const BLOG_ID = BLOG_IDS[0];
+
+/** 병합 후 최신순 상한(E2 페이지네이션이 이 목록을 페이징 — 넉넉히 유지). */
+const MERGE_LIMIT = 60;
 
 /** 모바일 블로그 JSON API 응답 item(사용하는 필드만 최소 선언) */
 interface PostItem {
@@ -126,14 +136,18 @@ function toKstDate(ms: number | undefined): string {
   return new Date(ms + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-/** JSON API item[] → Case[] (최신순 유지). */
-export function toCases(items: PostItem[]): Case[] {
+/**
+ * JSON API item[] → Case[] (최신순 유지).
+ * @param sourceBlogId 이 items를 가져온 블로그의 id. url을 반드시 "해당 블로그 기준"으로
+ *   만들기 위해 응답 필드(domainIdOrBlogId)보다 우선한다.
+ */
+export function toCases(items: PostItem[], sourceBlogId: string = BLOG_ID): Case[] {
   const cases: Case[] = [];
   for (const it of items) {
     if (it.logNo == null) continue;
     const title = cleanTitle(it.titleWithInspectMessage ?? it.title ?? "");
     if (!title) continue;
-    const blogId = it.domainIdOrBlogId ?? BLOG_ID;
+    const blogId = sourceBlogId || it.domainIdOrBlogId || BLOG_ID;
     cases.push({
       title,
       type: classify(title),
@@ -143,4 +157,41 @@ export function toCases(items: PostItem[]): Case[] {
     });
   }
   return cases;
+}
+
+/**
+ * BLOG_IDS 전체를 병렬 수집 → Case[] 병합 → 최신순 정렬 → 중복 제거 → 상한 절단.
+ *
+ * - Promise.allSettled: 한 블로그가 실패해도 나머지는 살린다(각 실패는 console.warn만).
+ * - fetchPostList는 내부적으로 실패를 삼키고 []를 반환하므로, 여기서 rejected는 사실상
+ *   드물지만 방어적으로 처리한다.
+ * - 중복 제거: 같은 글이 두 번 들어오는 것을 대비해 url(=blogId/logNo) 기준 dedup.
+ * - 라이브 성공 판정은 호출부(cases.ts)에서 "결과 length>0"로 한다(4개 중 1개라도 성공).
+ */
+export async function fetchAllCases(itemCount = 24, limit = MERGE_LIMIT): Promise<Case[]> {
+  const settled = await Promise.allSettled(
+    BLOG_IDS.map(async (id) => toCases(await fetchPostList(id, itemCount), id)),
+  );
+
+  const merged: Case[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === "fulfilled") {
+      merged.push(...r.value);
+    } else {
+      console.warn(`[blog] ${BLOG_IDS[i]} 수집 실패:`, r.reason);
+    }
+  });
+
+  // url(blogId/logNo) 기준 중복 제거
+  const seen = new Set<string>();
+  const deduped = merged.filter((c) => {
+    if (seen.has(c.url)) return false;
+    seen.add(c.url);
+    return true;
+  });
+
+  // date(YYYY-MM-DD) 내림차순 — 최신순
+  deduped.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  return deduped.slice(0, limit);
 }
