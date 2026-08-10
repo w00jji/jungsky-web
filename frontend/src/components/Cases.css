@@ -46,8 +46,8 @@
   display:inline-block;font-weight:700;font-size:13.5px;color:#002366;
   border:1.5px solid #002366;border-radius:99px;padding:12px 24px;
 }
-@media (min-width:769px){.case-grid{grid-template-columns:repeat(3,1fr)}}
-@media (min-width:1024px){.case-grid{grid-template-columns:repeat(4,1fr)}}
+/* 발주자 확정(2026-08-10): 웹 4열(×2줄=8) / 모바일 2열(×2줄=4). 3열 중간단계 제거 */
+@media (min-width:769px){.case-grid{grid-template-columns:repeat(4,1fr)}}
 
 /* 이식 추가분: 로딩/에러 상태 안내 (시안엔 없던 API 연동용 — 레이아웃 안전 최소 스타일) */
 .cases-status{margin-top:14px;color:#5A6474;font-size:14px;line-height:1.6}
@@ -56,7 +56,7 @@
 /* ── E2 서버사이드 페이지네이션 (시안엔 없던 신규 — 사이트 톤: 네이비 #002366) ── */
 .cases-pager{
   margin-top:22px;display:flex;justify-content:center;align-items:center;
-  gap:6px;flex-wrap:nowrap;
+  gap:6px;flex-wrap:wrap; /* 블록 10개 — 좁은 화면에선 줄바꿈으로 (2026-08-10) */
 }
 .cases-pager button{
   min-width:40px;height:40px;padding:0 6px;

@@ -41,13 +41,17 @@ const TABS: { filter: 'all' | TruckType; label: string }[] = [
 
 type LoadState = 'loading' | 'success' | 'error'
 
-/** 발주자 확정: 페이지당 20개(데스크톱 4열×5줄) */
-const PAGE_SIZE = 20
-/** 페이지 번호 노출 개수(5개씩 블록) */
-const PAGE_WINDOW = 5
+/** 발주자 확정(2026-08-10): 페이지당 개수 반응형 — 웹 4열×2줄=8, 모바일 2열×2줄=4 */
+const MOBILE_MQ = '(max-width: 768px)'
+function pageSizeFor(): number {
+  if (typeof window === 'undefined') return 8
+  return window.matchMedia(MOBILE_MQ).matches ? 4 : 8
+}
+/** 페이지 번호 노출 개수(10개씩 블록) */
+const PAGE_WINDOW = 10
 
-/** 블록 방식(2026-08-10 발주자 확정): 5개씩 고정 블록. [1..5] → [6..10] → …
- *  현재 페이지가 속한 블록의 번호들을 반환. `>`는 다음 블록(6부터)으로 뭉텅이 이동. */
+/** 블록 방식(2026-08-10 발주자 확정): 10개씩 고정 블록. [1..10] → [11..20] → …
+ *  현재 페이지가 속한 블록의 번호들을 반환. `›`는 다음 블록(11부터)으로 뭉텅이 이동. */
 function pageWindow(current: number, totalPages: number): number[] {
   if (totalPages <= 0) return []
   const blockStart = Math.floor((current - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1
@@ -62,13 +66,25 @@ function Cases() {
   const [page, setPage] = useState(1)
   const [data, setData] = useState<{ items: Case[]; total: number }>({ items: [], total: 0 })
   const [state, setState] = useState<LoadState>('loading')
+  const [size, setSize] = useState(pageSizeFor)
   const sectionRef = useRef<HTMLElement>(null)
 
-  // API 조회: 마운트 / filter 변경 / page 변경
+  // 화면폭이 모바일↔웹 경계를 넘으면 페이지당 개수(4↔8) 변경 + 1페이지로 리셋
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ)
+    const onChange = () => {
+      setSize(mq.matches ? 4 : 8)
+      setPage(1)
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  // API 조회: 마운트 / filter / page / size(반응형) 변경
   useEffect(() => {
     let alive = true
     setState('loading')
-    fetchCases({ type: filter, page, size: PAGE_SIZE })
+    fetchCases({ type: filter, page, size })
       .then((res) => {
         if (!alive) return
         setData({ items: res.items, total: res.total })
@@ -81,7 +97,7 @@ function Cases() {
     return () => {
       alive = false
     }
-  }, [filter, page])
+  }, [filter, page, size])
 
   // 탭 클릭: 필터 변경 + page 1로 리셋
   const changeFilter = (f: 'all' | TruckType) => {
@@ -102,7 +118,7 @@ function Cases() {
     return () => window.removeEventListener('jungsky:case-filter', onFilter)
   }, [])
 
-  const totalPages = Math.ceil(data.total / PAGE_SIZE)
+  const totalPages = Math.ceil(data.total / size)
 
   // 페이지 이동: 범위 밖·동일 페이지 무시. 이동 시 섹션 상단으로 부드럽게 스크롤.
   const goToPage = (p: number) => {
