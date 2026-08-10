@@ -52,3 +52,26 @@
 /* 이식 추가분: 로딩/에러 상태 안내 (시안엔 없던 API 연동용 — 레이아웃 안전 최소 스타일) */
 .cases-status{margin-top:14px;color:#5A6474;font-size:14px;line-height:1.6}
 .cases-status a{color:#002366;font-weight:700;text-decoration:underline}
+
+/* ── E2 서버사이드 페이지네이션 (시안엔 없던 신규 — 사이트 톤: 네이비 #002366) ── */
+.cases-pager{
+  margin-top:22px;display:flex;justify-content:center;align-items:center;
+  gap:6px;flex-wrap:nowrap;
+}
+.cases-pager button{
+  min-width:40px;height:40px;padding:0 6px;
+  border:1px solid #E3E6EC;background:#fff;border-radius:8px;
+  font-family:inherit;font-size:14px;font-weight:600;color:#5A6474;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.cases-pager button:hover:not(:disabled){border-color:#002366;color:#002366}
+.cases-pager button.on{background:#002366;border-color:#002366;color:#fff;cursor:default}
+.cases-pager button:disabled{opacity:.35;cursor:default}
+.cases-pager .pager-arrow{font-size:18px;line-height:1;font-weight:700}
+/* 390px에서 7버튼(‹ 1 2 3 4 5 ›) 넘치지 않게 크기·간격 축소 */
+@media (max-width:420px){
+  .cases-pager{gap:4px}
+  .cases-pager button{min-width:36px;height:40px;padding:0 4px;font-size:13px}
+  .cases-pager .pager-arrow{font-size:16px}
+}

@@ -1,5 +1,5 @@
 import './Cases.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fetchCases, type Case, type TruckType } from '../api/cases'
 import { trackCall } from '../utils/track'
 
@@ -7,17 +7,19 @@ import { trackCall } from '../utils/track'
  * S6 — 작업사례 필터 섹션
  * (시안 jungsky-site/index.html section.cases#cases 블록 이식)
  *
- * 시안과의 본질적 차이: 시안의 정적 `const CASES = [...]`(8건)를
- * `fetchCases()`(GET /api/cases → vite 프록시 → 로컬 워커 8787)로 교체했다.
- * B3(백엔드) 전까지 워커는 샘플 데이터를 반환한다.
+ * 시안과의 본질적 차이:
+ *  · 시안의 정적 `const CASES = [...]`(8건) → `fetchCases()`(GET /api/cases) 로 교체.
+ *  · E2: 필터·페이징을 **서버사이드**로. 브라우저엔 한 페이지(20건)만 내려온다
+ *    (누적 2636건을 프론트로 쏟지 않는다). 탭(톤수)과 페이지가 함께 동작한다.
  *
- * 상태 3종:
- *  · loading — "불러오는 중" 안내(레이아웃 유지)
- *  · success — 받은 배열을 시안 카드 마크업으로 렌더, 탭은 클라이언트 필터
- *  · error   — 조용히 실패하지 않고 블로그 링크 폴백
+ * 상태:
+ *  · filter — 'all' 또는 톤수 탭. 변경 시 page=1로 리셋.
+ *  · page   — 1부터. 페이지네이션/S5 이벤트로 변경.
+ *  · data   — { items(≤20), total } 서버 응답.
+ *  · state  — loading / success / error.
  *
  * S5 연동: Trucks의 '자세히 보기 +' 클릭 → CustomEvent('jungsky:case-filter')
- * 수신 → 해당 톤수 탭 활성화. 스크롤은 Trucks 쪽에서 #cases로 처리.
+ * 수신 → 해당 톤수 탭 활성화 + page=1. 스크롤은 Trucks 쪽에서 #cases로 처리.
  */
 
 // 톤수 라벨 — 시안 TYPE_LABEL 그대로 (탭 순서·값은 워커 TruckType과 동일해야 함)
@@ -39,18 +41,37 @@ const TABS: { filter: 'all' | TruckType; label: string }[] = [
 
 type LoadState = 'loading' | 'success' | 'error'
 
-function Cases() {
-  const [cases, setCases] = useState<Case[]>([])
-  const [state, setState] = useState<LoadState>('loading')
-  const [filter, setFilter] = useState<'all' | TruckType>('all')
+/** 발주자 확정: 페이지당 20개(데스크톱 4열×5줄) */
+const PAGE_SIZE = 20
+/** 페이지 번호 노출 개수(5개씩 슬라이딩) */
+const PAGE_WINDOW = 5
 
-  // API 조회 (마운트 1회)
+/** 현재 페이지 중심 5칸 창을 [1..totalPages] 안에서 클램프해 페이지 번호 배열 생성. */
+function pageWindow(current: number, totalPages: number): number[] {
+  if (totalPages <= 0) return []
+  let start = Math.max(1, current - Math.floor(PAGE_WINDOW / 2))
+  const end = Math.min(totalPages, start + PAGE_WINDOW - 1)
+  start = Math.max(1, end - PAGE_WINDOW + 1)
+  const out: number[] = []
+  for (let p = start; p <= end; p++) out.push(p)
+  return out
+}
+
+function Cases() {
+  const [filter, setFilter] = useState<'all' | TruckType>('all')
+  const [page, setPage] = useState(1)
+  const [data, setData] = useState<{ items: Case[]; total: number }>({ items: [], total: 0 })
+  const [state, setState] = useState<LoadState>('loading')
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // API 조회: 마운트 / filter 변경 / page 변경
   useEffect(() => {
     let alive = true
-    fetchCases()
-      .then((data) => {
+    setState('loading')
+    fetchCases({ type: filter, page, size: PAGE_SIZE })
+      .then((res) => {
         if (!alive) return
-        setCases(data)
+        setData({ items: res.items, total: res.total })
         setState('success')
       })
       .catch(() => {
@@ -60,7 +81,13 @@ function Cases() {
     return () => {
       alive = false
     }
-  }, [])
+  }, [filter, page])
+
+  // 탭 클릭: 필터 변경 + page 1로 리셋
+  const changeFilter = (f: 'all' | TruckType) => {
+    setFilter(f)
+    setPage(1)
+  }
 
   // S5 기종 카드 → 탭 전환 이벤트 수신 (스크롤은 Trucks 쪽에서 처리)
   useEffect(() => {
@@ -68,17 +95,26 @@ function Cases() {
       const detail = (e as CustomEvent<string>).detail
       if (detail === 'all' || detail === '1t' || detail === '2.5t' || detail === '3.5t' || detail === '5t') {
         setFilter(detail)
+        setPage(1)
       }
     }
     window.addEventListener('jungsky:case-filter', onFilter)
     return () => window.removeEventListener('jungsky:case-filter', onFilter)
   }, [])
 
-  // 받은 데이터에 대해 클라이언트 필터링 (시안 renderCases와 동일 로직)
-  const list = cases.filter((c) => filter === 'all' || c.type === filter)
+  const totalPages = Math.ceil(data.total / PAGE_SIZE)
+
+  // 페이지 이동: 범위 밖·동일 페이지 무시. 이동 시 섹션 상단으로 부드럽게 스크롤.
+  const goToPage = (p: number) => {
+    if (p < 1 || p > totalPages || p === page) return
+    setPage(p)
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const windowPages = pageWindow(page, totalPages)
 
   return (
-    <section className="cases" id="cases">
+    <section className="cases" id="cases" ref={sectionRef}>
       <div className="wrap">
         <span className="eyebrow">CASES</span>
         <h2>지금도 현장에 있습니다</h2>
@@ -90,7 +126,7 @@ function Cases() {
               key={t.filter}
               className={`case-tab${filter === t.filter ? ' on' : ''}`}
               data-filter={t.filter}
-              onClick={() => setFilter(t.filter)}
+              onClick={() => changeFilter(t.filter)}
               role="tab"
               aria-selected={filter === t.filter}
             >
@@ -113,7 +149,7 @@ function Cases() {
           </p>
         )}
 
-        {state === 'success' && list.length === 0 && (
+        {state === 'success' && data.total === 0 && (
           <p className="cases-status">
             이 차종의 작업사례는 블로그에서 확인할 수 있습니다.{' '}
             <a href="https://blog.naver.com/jungs5377" target="_blank" rel="noopener">
@@ -123,35 +159,68 @@ function Cases() {
           </p>
         )}
 
-        {state === 'success' && list.length > 0 && (
-          <div className="case-grid" id="caseGrid">
-            {list.map((c) => (
-              <a
-                className="case-card"
-                key={c.url}
-                href={c.url}
-                target="_blank"
-                rel="noopener"
-                onClick={() => trackCall('case_click')}
-              >
-                <div className="case-thumb">
-                  {c.thumb ? (
-                    <img src={c.thumb} alt={c.title} loading="lazy" />
-                  ) : (
-                    '작업 사진 (교체)'
-                  )}
-                </div>
-                <div className="case-info">
-                  <span className="tag">
-                    {c.type ? `${TYPE_LABEL[c.type]} 스카이차` : '정스카이 작업사례'}
-                    {c.date && <span className="case-date">{c.date.replace(/-/g, '.')}</span>}
-                  </span>
-                  <h4>{c.title}</h4>
-                  <div className="go">블로그에서 자세히 보기 ↗</div>
-                </div>
-              </a>
-            ))}
-          </div>
+        {state === 'success' && data.total > 0 && (
+          <>
+            <div className="case-grid" id="caseGrid">
+              {data.items.map((c) => (
+                <a
+                  className="case-card"
+                  key={c.url}
+                  href={c.url}
+                  target="_blank"
+                  rel="noopener"
+                  onClick={() => trackCall('case_click')}
+                >
+                  <div className="case-thumb">
+                    {c.thumb ? (
+                      <img src={c.thumb} alt={c.title} loading="lazy" />
+                    ) : (
+                      '작업 사진 (교체)'
+                    )}
+                  </div>
+                  <div className="case-info">
+                    <span className="tag">
+                      {c.type ? `${TYPE_LABEL[c.type]} 스카이차` : '정스카이 작업사례'}
+                      {c.date && <span className="case-date">{c.date.replace(/-/g, '.')}</span>}
+                    </span>
+                    <h4>{c.title}</h4>
+                    <div className="go">블로그에서 자세히 보기 ↗</div>
+                  </div>
+                </a>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <nav className="cases-pager" aria-label="작업사례 페이지">
+                <button
+                  className="pager-arrow"
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page <= 1}
+                  aria-label="이전 페이지"
+                >
+                  ‹
+                </button>
+                {windowPages.map((p) => (
+                  <button
+                    key={p}
+                    className={`pager-num${p === page ? ' on' : ''}`}
+                    onClick={() => goToPage(p)}
+                    aria-current={p === page ? 'page' : undefined}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  className="pager-arrow"
+                  onClick={() => goToPage(page + 1)}
+                  disabled={page >= totalPages}
+                  aria-label="다음 페이지"
+                >
+                  ›
+                </button>
+              </nav>
+            )}
+          </>
         )}
 
         <div className="cases-more">
