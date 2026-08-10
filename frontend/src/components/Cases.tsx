@@ -43,17 +43,17 @@ type LoadState = 'loading' | 'success' | 'error'
 
 /** 발주자 확정: 페이지당 20개(데스크톱 4열×5줄) */
 const PAGE_SIZE = 20
-/** 페이지 번호 노출 개수(5개씩 슬라이딩) */
+/** 페이지 번호 노출 개수(5개씩 블록) */
 const PAGE_WINDOW = 5
 
-/** 현재 페이지 중심 5칸 창을 [1..totalPages] 안에서 클램프해 페이지 번호 배열 생성. */
+/** 블록 방식(2026-08-10 발주자 확정): 5개씩 고정 블록. [1..5] → [6..10] → …
+ *  현재 페이지가 속한 블록의 번호들을 반환. `>`는 다음 블록(6부터)으로 뭉텅이 이동. */
 function pageWindow(current: number, totalPages: number): number[] {
   if (totalPages <= 0) return []
-  let start = Math.max(1, current - Math.floor(PAGE_WINDOW / 2))
-  const end = Math.min(totalPages, start + PAGE_WINDOW - 1)
-  start = Math.max(1, end - PAGE_WINDOW + 1)
+  const blockStart = Math.floor((current - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1
+  const end = Math.min(totalPages, blockStart + PAGE_WINDOW - 1)
   const out: number[] = []
-  for (let p = start; p <= end; p++) out.push(p)
+  for (let p = blockStart; p <= end; p++) out.push(p)
   return out
 }
 
@@ -192,11 +192,12 @@ function Cases() {
 
             {totalPages > 1 && (
               <nav className="cases-pager" aria-label="작업사례 페이지">
+                {/* 블록(뭉텅이) 이동: ‹는 이전 5개 블록, ›는 다음 5개 블록으로. 각 블록의 첫 페이지로 이동 */}
                 <button
                   className="pager-arrow"
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page <= 1}
-                  aria-label="이전 페이지"
+                  onClick={() => goToPage(windowPages[0] - PAGE_WINDOW)}
+                  disabled={windowPages[0] <= 1}
+                  aria-label="이전 페이지 묶음"
                 >
                   ‹
                 </button>
@@ -212,9 +213,9 @@ function Cases() {
                 ))}
                 <button
                   className="pager-arrow"
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page >= totalPages}
-                  aria-label="다음 페이지"
+                  onClick={() => goToPage(windowPages[0] + PAGE_WINDOW)}
+                  disabled={windowPages[0] + PAGE_WINDOW > totalPages}
+                  aria-label="다음 페이지 묶음"
                 >
                   ›
                 </button>
