@@ -27,4 +27,30 @@ export interface Case {
   url: string;
   thumb: string;
   date: string;
+  /** E3: 카드 클릭 누적 조회수. Cloudflare KV(VIEWS)에서 부착. 기본 0. */
+  views: number;
+}
+
+/**
+ * E3 조회수 저장소 바인딩 최소 타입.
+ * `@cloudflare/workers-types` 미설치 환경이라, 이 함수들이 실제 쓰는 메서드만 선언한다.
+ * (Pages 배포 시 실제 KVNamespace가 주입되며 이 인터페이스와 호환된다.)
+ */
+export interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+}
+
+/** Pages Functions env — KV 바인딩 이름 `VIEWS`. 로컬/미설정 시 undefined 가능(방어). */
+export interface Env {
+  VIEWS?: KVNamespace;
+}
+
+/**
+ * 케이스별 조회수 KV 키. 케이스 고유값 = 글 url.
+ * encodeURIComponent로 KV 키 안전화(콜론·슬래시 등 그대로 둬도 되지만 방어적으로).
+ * ⚠️ view.ts(증가)와 cases.ts(조회)가 반드시 같은 키 스킴을 써야 한다 → 여기서 단일 정의.
+ */
+export function viewKey(url: string): string {
+  return `v:${encodeURIComponent(url)}`;
 }

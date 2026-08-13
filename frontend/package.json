@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "preview:pages": "npm run build && wrangler pages dev dist --ip 0.0.0.0 --port 5173 --compatibility-date 2026-07-01"
+    "preview:pages": "npm run build && wrangler pages dev dist --ip 0.0.0.0 --port 5173 --kv VIEWS --compatibility-date 2026-07-01"
   },
   "dependencies": {
     "react": "^19.2.7",

@@ -1,6 +1,6 @@
 import './Cases.css'
 import { useEffect, useRef, useState } from 'react'
-import { fetchCases, type Case, type TruckType } from '../api/cases'
+import { fetchCases, incrementView, type Case, type TruckType } from '../api/cases'
 import { trackCall } from '../utils/track'
 
 /**
@@ -129,6 +129,19 @@ function Cases() {
 
   const windowPages = pageWindow(page, totalPages)
 
+  // 카드 클릭: 전환추적 + 조회수 +1 발신 + 낙관적 업데이트(화면 숫자 즉시 +1).
+  // preventDefault 안 함 — target=_blank 새 탭 이동은 그대로 진행된다.
+  const handleCardClick = (c: Case) => {
+    trackCall('case_click')
+    incrementView(c.url)
+    setData((prev) => ({
+      ...prev,
+      items: prev.items.map((it) =>
+        it.url === c.url ? { ...it, views: it.views + 1 } : it,
+      ),
+    }))
+  }
+
   return (
     <section className="cases" id="cases" ref={sectionRef}>
       <div className="wrap">
@@ -185,7 +198,7 @@ function Cases() {
                   href={c.url}
                   target="_blank"
                   rel="noopener"
-                  onClick={() => trackCall('case_click')}
+                  onClick={() => handleCardClick(c)}
                 >
                   <div className="case-thumb">
                     {c.thumb ? (
@@ -200,7 +213,13 @@ function Cases() {
                       {c.date && <span className="case-date">{c.date.replace(/-/g, '.')}</span>}
                     </span>
                     <h4>{c.title}</h4>
-                    <div className="go">블로그에서 자세히 보기 ↗</div>
+                    <div className="case-foot">
+                      <span className="go">블로그에서 자세히 보기 ↗</span>
+                      {/* E3: 카드 클릭 누적 조회수 — subtle하게 표시 */}
+                      <span className="case-views" aria-label={`조회수 ${c.views}`}>
+                        <span aria-hidden="true">👁</span> {c.views}
+                      </span>
+                    </div>
                   </div>
                 </a>
               ))}

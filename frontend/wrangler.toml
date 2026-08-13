@@ -1,0 +1,24 @@
+# Cloudflare Pages 설정 (jungsky-web/frontend)
+# 배포 대상은 이 frontend/ 하나 — functions/api/*.ts 가 Pages Functions 로 서빙된다.
+
+name = "jungsky-web"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-07-01"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# E3 조회수용 KV 네임스페이스 바인딩 (이름 반드시 `VIEWS`)
+#
+# 로컬 개발: 아래 블록 없이도 `wrangler pages dev dist --kv VIEWS` 플래그로
+#   로컬 KV(.wrangler/state 영속)가 자동 주입된다(package.json preview:pages 에 포함).
+#   그래서 이 블록은 로컬에선 주석 처리로 둔다(placeholder id 로 dev 가 깨지지 않게).
+#
+# 배포 연결(발주자 액션, 무료):
+#   ① `wrangler kv namespace create VIEWS`  → 출력된 id 복사
+#   ② 아래 3줄 주석 해제 후 id = "복사한값" 기입 (또는 Cloudflare Pages 대시보드
+#      → 프로젝트 → Settings → Functions → KV namespace bindings 에서 VIEWS 연결)
+#   ③ 재배포
+#
+# [[kv_namespaces]]
+# binding = "VIEWS"
+# id = "REPLACE_WITH_KV_NAMESPACE_ID"
+# ─────────────────────────────────────────────────────────────────────────────

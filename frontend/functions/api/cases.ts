@@ -21,9 +21,13 @@
  * 프론트(src/api/cases.ts, Cases.tsx)는 이 계약에만 의존한다.
  * TODO(비공식 API): 데이터 갱신은 sync-cases.mjs 로만. 이 함수는 조회 전용.
  */
-import { type Case, type TruckType } from "./_blog";
+import { type Case, type TruckType, type Env, viewKey } from "./_blog";
 // 누적 스냅샷(Case[], date 내림차순). esbuild가 번들에 인라인한다.
+// (스냅샷엔 views 필드가 없다 — 조회수는 아래에서 KV로 부착한다.)
 import casesAll from "../../src/data/cases-all.json";
+
+/** 스냅샷 원소(views 미포함) — 파일에는 조회수가 없고 KV에서 붙인다. */
+type CaseData = Omit<Case, "views">;
 
 /** 페이지 기본 크기 / 상한(악의적 거대 size로 전량 방출되는 것 방지). */
 const DEFAULT_SIZE = 20;
@@ -46,6 +50,7 @@ function parseIntParam(
 
 export async function onRequestGet(context: {
   request: Request;
+  env: Env;
 }): Promise<Response> {
   const url = new URL(context.request.url);
 
@@ -69,13 +74,31 @@ export async function onRequestGet(context: {
     Number.MAX_SAFE_INTEGER,
   );
 
-  const all = casesAll as Case[];
+  const all = casesAll as CaseData[];
   const filtered = type === "all" ? all : all.filter((c) => c.type === type);
   const total = filtered.length;
-  const items = filtered.slice((page - 1) * size, page * size);
+  const pageData = filtered.slice((page - 1) * size, page * size);
 
+  // E3: 이번 페이지(≤size) 각 글의 조회수를 KV에서 병렬 조회해 부착.
+  // env.VIEWS 미설정(로컬 --kv 누락 등)이면 전부 views:0 — 크래시 없이 그대로 노출.
+  const kv = context.env?.VIEWS;
+  const items: Case[] = kv
+    ? await Promise.all(
+        pageData.map(async (c) => {
+          const raw = await kv.get(viewKey(c.url));
+          const views = Number.parseInt(raw ?? "0", 10);
+          return { ...c, views: Number.isFinite(views) ? views : 0 };
+        }),
+      )
+    : pageData.map((c) => ({ ...c, views: 0 }));
+
+  // E3: 각 원소에 실시간 조회수(views)가 붙으므로 HTTP 캐시 금지(no-store).
+  //   캐시가 있으면 카드 클릭 직후 새로고침해도 낡은 조회수가 보인다(E3 수용조건 위반).
+  //   ⚠️ KV 는 전역적으로 최종 일관성(edge POP 간 전파 지연 수십초 가능) — 서로 다른
+  //      지역에서 막 증가시킨 값이 반영되기까진 짧은 지연이 있을 수 있다(소규모에선 무시 가능).
+  //   슬라이스+KV read 비용은 소규모 트래픽 전제(KV read 무료 10만/일)로 문제 없음.
   return Response.json(
     { items, total, page, size },
-    { headers: { "cache-control": "public, max-age=300" } },
+    { headers: { "cache-control": "no-store" } },
   );
 }
