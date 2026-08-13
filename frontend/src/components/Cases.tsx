@@ -216,9 +216,7 @@ function Cases() {
                     <div className="case-foot">
                       <span className="go">블로그에서 자세히 보기 ↗</span>
                       {/* E3: 카드 클릭 누적 조회수 — subtle하게 표시 */}
-                      <span className="case-views" aria-label={`조회수 ${c.views}`}>
-                        <span aria-hidden="true">👁</span> {c.views}
-                      </span>
+                      <span className="case-views">조회수 {c.views}</span>
                     </div>
                   </div>
                 </a>
