@@ -1,7 +1,7 @@
 # Cloudflare Pages 설정 (jungsky-web/frontend)
 # 배포 대상은 이 frontend/ 하나 — functions/api/*.ts 가 Pages Functions 로 서빙된다.
 
-name = "jungsky-web"
+name = "jungsky"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-07-01"
 
@@ -18,7 +18,7 @@ compatibility_date = "2026-07-01"
 #      → 프로젝트 → Settings → Functions → KV namespace bindings 에서 VIEWS 연결)
 #   ③ 재배포
 #
-# [[kv_namespaces]]
-# binding = "VIEWS"
-# id = "REPLACE_WITH_KV_NAMESPACE_ID"
+[[kv_namespaces]]
+binding = "VIEWS"
+id = "383ae61bc8a849be9048669e64d47125"
 # ─────────────────────────────────────────────────────────────────────────────

@@ -1,8 +1,19 @@
 /* ══════════ 히어로 (시안 jungsky-site/index.html .hero 블록 원치수 이식)
    라이브: 네이비 콜라주 이미지 + 주황 전화 버튼 오버레이
    + v3 캐러셀 기능 이식: 슬라이드 3장 자동 순환, 원본 콜라주가 1번 슬라이드 ══════════ */
-.hero{position:relative}
-.hero .swiper{aspect-ratio:1059/500} /* 원본 콜라주 이미지 비율 고정 — 슬라이드 전환 시 높이 유지 */
+/* 히어로 실제 높이(--hero-h): 너비는 항상 화면 꽉 채우고(100%), 높이만 상한을 둔다.
+   aspect-ratio+max-height는 비율 유지하려고 너비까지 줄여버려(넓은 화면에서 양옆 여백)
+   → height:min(비율높이, 상한)으로 대체. 너비는 100% 고정이라 안 줄어듦.
+   · 비율높이 = 100vw × 500/1059 (원본 1059:500, 히어로는 화면 폭 전체)
+   · 상한 = 헤더+아래 섹션 살짝 미리보기 공간만큼 뺀 높이 → 넓은 화면에서도 스크롤 여지 확보
+   변수화 이유: 아래 문구(hero-copy)들이 이 높이에 비례하도록 → 넓은 화면에서 높이가
+   상한에 걸려 짧아져도 문구가 같이 작아져 전화 버튼과 겹치지 않음.
+   (2026-08-13 발주자: "높이만 줄여야 하는데 너비도 줄었다 / 넓게 하면 꽉 차게") */
+.hero{
+  position:relative;
+  --hero-h:min(calc(100vw * 500 / 1059), calc(100svh - 280px));
+}
+.hero .swiper{width:100%;height:var(--hero-h)}
 .hero .swiper-slide{position:relative}
 .hero .swiper-slide img{width:100%;height:100%;object-fit:cover}
 
@@ -28,17 +39,19 @@
   position:absolute;left:23%;top:29%;z-index:9;pointer-events:none;
   text-shadow:0 2px 14px rgba(5,6,45,.55);
 }
+/* 아래 수치는 원래 vw값을 히어로 높이 비례로 환산(1vw = --hero-h/47.214, 47.214=500/1059×100).
+   히어로가 상한에 안 걸린 일반 화면에선 --hero-h=47.214vw라 기존 vw값과 완전히 동일. */
 .hero-copy-bar{
-  display:block;width:2.36vw;height:0.34vw;min-height:2px;
-  background:#FD6F22;margin:0 0 1.15vw;
+  display:block;width:calc(var(--hero-h)*0.05);height:calc(var(--hero-h)*0.0072);min-height:2px;
+  background:#FD6F22;margin:0 0 calc(var(--hero-h)*0.0244);
 }
 .hero-copy-sub{
   margin:0;color:#fff;font-weight:500;white-space:nowrap;
-  font-size:2.12vw;line-height:1.10;letter-spacing:-0.01em;
+  font-size:calc(var(--hero-h)*0.0449);line-height:1.10;letter-spacing:-0.01em;
 }
 .hero-copy-brand{
-  margin:0.5vw 0 0;color:#fff;font-weight:800;
-  font-size:5.95vw;line-height:1;letter-spacing:0.07em;
+  margin:calc(var(--hero-h)*0.0106) 0 0;color:#fff;font-weight:800;
+  font-size:calc(var(--hero-h)*0.126);line-height:1;letter-spacing:0.07em;
 }
 /* 사진 슬라이드(2·3번)는 콜라주와 톤을 맞추는 옅은 네이비 오버레이 */
 .hero .swiper-slide.photo::after{

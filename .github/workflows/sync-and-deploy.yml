@@ -1,0 +1,86 @@
+# 정스카이 — 블로그 새 글 자동 수집 + Cloudflare Pages 자동 배포
+#
+# 무엇을 하나:
+#   1) 15분마다(+ 수동 버튼 + 코드 push 시) 깨어난다.
+#   2) 네이버 블로그 4개에서 새 글을 수집한다(scripts/sync-cases.mjs).
+#   3) 새 글이 있으면 데이터 파일(cases-all.json)을 갱신해 저장(커밋)한다.
+#   4) 사이트를 새로 빌드해 Cloudflare Pages(jungsky)에 배포한다.
+#
+# 발주자가 미리 등록해야 할 비밀값(GitHub → Settings → Secrets and variables → Actions):
+#   - CLOUDFLARE_API_TOKEN   : Cloudflare 배포 권한 토큰(대시보드에서 발급)
+#   - CLOUDFLARE_ACCOUNT_ID  : 69936ce7192572019b9d033c7d0a4d9c
+#
+# 네이버가 GitHub 서버를 막으면: 이 자동화만 실패 알림이 오고, 사이트/기존 글은 그대로.
+#   그때는 docs/06-블로그-수동-갱신-비상절차.md 대로 발주자 컴퓨터에서 수동 갱신.
+
+name: 블로그 동기화 + 배포
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # 15분마다(GitHub 사정으로 실제론 더 지연될 수 있음)
+  workflow_dispatch: {} # 저장소 Actions 탭의 "Run workflow" 수동 버튼
+  push:
+    branches: [main] # 코드 수정을 올리면 즉시 재배포
+
+# 새 글을 커밋해 되돌려 저장하려면 쓰기 권한 필요
+permissions:
+  contents: write
+
+# 동시에 두 번 돌지 않게(겹침 방지)
+concurrency:
+  group: sync-deploy
+  cancel-in-progress: false
+
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Node 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 의존성 설치
+        working-directory: frontend
+        run: npm ci
+
+      - name: 블로그 새 글 수집 + 변경 감지
+        id: sync
+        working-directory: frontend
+        run: |
+          node scripts/sync-cases.mjs
+          if git diff --quiet -- src/data/cases-all.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "새 글 없음"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "새 글 있음 — 데이터 갱신됨"
+          fi
+
+      - name: 새 글 있으면 저장(커밋)
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/src/data/cases-all.json
+          git commit -m "chore: 블로그 새 글 자동 동기화"
+          git push
+
+      # 배포 조건: (새 글 있음) 또는 (수동/코드push로 실행) — 예약 실행인데 새 글 없으면 배포 생략(무료 시간 절약)
+      - name: 빌드
+        if: steps.sync.outputs.changed == 'true' || github.event_name != 'schedule'
+        working-directory: frontend
+        run: npm run build
+
+      - name: Cloudflare Pages 배포
+        if: steps.sync.outputs.changed == 'true' || github.event_name != 'schedule'
+        working-directory: frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler pages deploy dist --project-name jungsky --branch main --commit-dirty=true
