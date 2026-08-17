@@ -17,26 +17,14 @@
 .hero .swiper-slide{position:relative}
 .hero .swiper-slide img{width:100%;height:100%;object-fit:cover}
 
-/* ── 슬라이드 1: 문구 구워진 hero_01.png 재현 (네이비 배경 + 사선 흑백사진 + 웹텍스트)
-   좌표·색은 원본 hero_01.png(1059×500) 픽셀 측정값. 전 요소 vw/%로 이미지 스케일과 동일 축소.
-   네이비 #000A3E, 사선: 상단 x631(59.54%) → 하단 x479(45.25%). ── */
-.hero .hslide1{background:#000A3E}
-.hslide1-bg{position:absolute;inset:0;background:#000A3E}
-/* 우측 사진 레이어: hero_01_photo.png = 원본 x450~1059 크롭(→ 슬라이드 42.49%~100%).
-   clip-path로 좌측 사선 경계 재현(래퍼 폭 기준: 상단 29.64%, 하단 4.79%) */
-.hslide1-photo{
-  position:absolute;top:0;bottom:0;right:0;left:42.49%;
-  clip-path:polygon(29.64% 0, 100% 0, 100% 100%, 4.79% 100%);
-}
-/* cover: 발주자 교체 사진(hero_00, 2.12:1)이 찌그러지지 않게 중앙 기준 크롭.
-   (원래 fill — hero_01_photo가 박스와 동일 비율의 정밀 크롭이었을 때만 유효) */
-.hslide1-photo img{width:100%;height:100%;object-fit:cover;display:block}
-/* 문구 블록 — 발주자 요청(2026-07-23): 캐러셀 밖 상시 오버레이(모든 슬라이드에서 노출),
-   전화 버튼(left:23%, top:62%)과 좌측 정렬 + 버튼 바로 위에 배치.
-   pointer-events:none — 문구가 스와이프/클릭을 가로막지 않게.
-   text-shadow — 2·3번 사진 슬라이드 위에서도 흰 글자가 읽히게. */
+/* 문구 블록 — 발주자 요청(2026-08-17): 새 히어로 배너 3장(좌측 네이비 + 우측 사진)에 맞춰
+   문구+전화 버튼을 좌측 네이비 영역의 세로 중앙에 배치.
+   캐러셀 밖 상시 오버레이(모든 슬라이드에서 노출), pointer-events:none로 스와이프/클릭 비방해.
+   top:50% + translateY로 (문구블록 → 전화버튼) 묶음을 세로 중앙 정렬(높이 변해도 비율 유지).
+   text-shadow — 사진 위에서도 흰 글자가 읽히게. */
 .hero-copy{
-  position:absolute;left:23%;top:29%;z-index:9;pointer-events:none;
+  position:absolute;left:11%;top:55%;transform:translateY(-108%);
+  z-index:9;pointer-events:none;
   text-shadow:0 2px 14px rgba(5,6,45,.55);
 }
 /* 아래 수치는 원래 vw값을 히어로 높이 비례로 환산(1vw = --hero-h/47.214, 47.214=500/1059×100).
@@ -60,9 +48,9 @@
 }
 .hero .swiper-pagination-bullet{background:#fff;opacity:.5}
 .hero .swiper-pagination-bullet-active{opacity:1;background:#FF6600}
-/* 원본 .phone-blink — 이미지 속 '정스카이' 텍스트 바로 아래 좌측에 위치 */
+/* .phone-blink — 문구 블록 바로 아래(좌측 네이비 세로중앙 묶음의 하단). hero-copy와 좌측 정렬 */
 .phone-blink{
-  position:absolute;left:23%;top:62%;
+  position:absolute;left:11%;top:55%;transform:translateY(28%);
   display:inline-block;padding:8px 16px;
   background:#ff6600;color:#fff!important;
   font-size:32px;font-weight:600;border-radius:8px;

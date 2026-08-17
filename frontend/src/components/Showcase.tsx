@@ -66,7 +66,7 @@ function Showcase() {
             ))}
           </div>
         </div>
-        {/* 블로그 링크 버튼 (원본: 우측 정렬 화살표 애니메이션) */}
+        {/* 블로그 링크 버튼 — 발주자 요청(2026-08-17)으로 숨김(주석 처리). 필요 시 아래 주석 해제로 복구.
         <div className="blog-cta">
           <div className="wrap inner">
             <a href="https://blog.naver.com/jungs5377" target="_blank" rel="noopener">
@@ -83,6 +83,7 @@ function Showcase() {
             </a>
           </div>
         </div>
+        */}
       </section>
     </>
   )

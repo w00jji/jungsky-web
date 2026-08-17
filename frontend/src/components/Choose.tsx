@@ -28,13 +28,13 @@ function Choose() {
             {/* IMAGE-SLOT: /images/common/car_icon2.png | 표시 76×76(모바일 56) | 완료(2026-07-26 발주자 삽입·연결) */}
             <img src="/images/common/car_icon2.png" alt="" loading="lazy" />
             <h3>전국 1초 배차</h3>
-            <p>대구·경북 및 전국 어디든<br />신속한 배차 시스템</p>
+            <p>전국 어디든<br />신속한 배차 시스템</p>
           </div>
           <div className="choose-card">
             {/* IMAGE-SLOT: /images/common/chat_icon.png | 표시 76×76(모바일 56) | 완료(2026-07-26 발주자 삽입·연결) */}
             <img src="/images/common/chat_icon.png" alt="" loading="lazy" />
             <h3>맞춤형 상담</h3>
-            <p>1시간 단기 작업부터 반나절, 하루,<br />야간, 월대, 1일 이상<br />장기 작업까지 조율 가능</p>
+            <p>1시간, 반나절, 하루,<br />야간, 월대, 1일 이상<br />장기 작업까지 조율 가능</p>
           </div>
           <div className="choose-card">
             {/* IMAGE-SLOT: /images/common/phone_icon.png | 표시 76×76(모바일 56) | 완료(2026-07-26 발주자 삽입·연결) */}
